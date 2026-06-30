@@ -43,24 +43,25 @@ pipeline {
                 }
             }
         }
-        
         stage('Update Deployment File') {
             environment {
                 GIT_REPO_NAME = "your-repo-name"
                 GIT_USER_NAME = "your-github-username"
             }
             steps {
-                withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
+                // Change 'string' to 'usernamePassword'
+                withCredentials([usernamePassword(credentialsId: 'github', usernameVariable: 'GIT_USER', passwordVariable: 'GITHUB_TOKEN')]) {
                     sh '''
                         git config user.email "your-email@example.com"
                         git config user.name "Your Name"
                         
-                        # Use sed to update the yml file in the sibling directory
                         sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" spring-boot-app-manifests/deployment.yml
                         
                         git add spring-boot-app-manifests/deployment.yml
                         git commit -m "Update deployment image to version ${BUILD_NUMBER}"
-                        git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
+                        
+                        # Use both the variable for user and token to authenticate seamlessly
+                        git push https://${GIT_USER}:${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
                     '''
                 }
             }
